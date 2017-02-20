@@ -78,6 +78,7 @@ process.stdin.on('data', (data) => {
             _process.kill();
             _process = null;
         }
+        paused = true;
     } else if (command === 'c') {
         paused = false;
         _spawn();
