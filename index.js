@@ -4,7 +4,6 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 const chokidar = require('chokidar');
-const debounce = require('lodash.debounce');
 
 let args = [];
 
@@ -52,12 +51,35 @@ function _spawn() {
                        });
 }
 
+let paused = false;
+
 let fn = () => {
-    _spawn();
+    if (!paused) {
+        _spawn();
+    }
 };
 
 if (config.debounce) {
+    const debounce = require('lodash.debounce');
+
     fn = debounce(fn, config.debounce);
 }
 
 chokidar.watch(config.filesToWatch || process.cwd()).on('all', fn);
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (data) => {
+    const command = data.trim().toLowerCase();
+
+    if (command === 'rs') {
+        _spawn();
+    } else if (command === 'p') {
+        if (_process) {
+            _process.kill();
+            _process = null;
+        }
+    } else if (command === 'c') {
+        paused = false;
+        _spawn();
+    }
+});
